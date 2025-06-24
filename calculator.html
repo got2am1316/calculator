@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Modern Calculator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap');
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: #1e1e2f;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+
+  .calculator {
+    background: linear-gradient(145deg, #29293d, #222232);
+    border-radius: 20px;
+    box-shadow:
+      10px 10px 30px #1a1a2b,
+      -10px -10px 30px #323246;
+    padding: 30px;
+    width: 320px;
+  }
+
+  .display {
+    background: #121224;
+    color: #f0f0f0;
+    font-size: 2.5rem;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: right;
+    letter-spacing: 1.5px;
+    box-shadow: inset 3px 3px 8px #1c1c30,
+                inset -3px -3px 8px #0b0b13;
+    user-select: none;
+    margin-bottom: 25px;
+    min-height: 60px;
+  }
+
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+
+  button {
+    border: none;
+    border-radius: 12px;
+    padding: 20px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    background: linear-gradient(145deg, #29293d, #222232);
+    box-shadow:
+      4px 4px 6px #1a1a2b,
+      -4px -4px 6px #323246;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+
+  button:active {
+    box-shadow: inset 4px 4px 6px #1a1a2b,
+                inset -4px -4px 6px #323246;
+    color: #fff;
+  }
+
+  button.operator {
+    background: linear-gradient(145deg, #ff6b6b, #ff3d3d);
+    color: #fff;
+    box-shadow:
+      4px 4px 6px #aa2121,
+      -4px -4px 6px #ff5b5b;
+  }
+
+  button.operator:active {
+    box-shadow: inset 4px 4px 6px #aa2121,
+                inset -4px -4px 6px #ff5b5b;
+    color: #ffdad1;
+  }
+
+  button.zero {
+    grid-column: span 2;
+  }
+
+  .footer {
+    margin-top: 20px;
+    font-size: 0.8rem;
+    color: #66677a;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="calculator" role="application" aria-label="Calculator">
+    <div id="display" class="display" aria-live="polite" aria-atomic="true">0</div>
+    <div class="buttons">
+      <button class="operator" data-action="clear" aria-label="Clear">C</button>
+      <button class="operator" data-action="backspace" aria-label="Backspace">⌫</button>
+      <button class="operator" data-action="percent" aria-label="Percent">%</button>
+      <button class="operator" data-action="divide" aria-label="Divide">÷</button>
+
+      <button data-action="7" aria-label="7">7</button>
+      <button data-action="8" aria-label="8">8</button>
+      <button data-action="9" aria-label="9">9</button>
+      <button class="operator" data-action="multiply" aria-label="Multiply">×</button>
+
+      <button data-action="4" aria-label="4">4</button>
+      <button data-action="5" aria-label="5">5</button>
+      <button data-action="6" aria-label="6">6</button>
+      <button class="operator" data-action="subtract" aria-label="Subtract">−</button>
+
+      <button data-action="1" aria-label="1">1</button>
+      <button data-action="2" aria-label="2">2</button>
+      <button data-action="3" aria-label="3">3</button>
+      <button class="operator" data-action="add" aria-label="Add">+</button>
+
+      <button class="zero" data-action="0" aria-label="0">0</button>
+      <button data-action="decimal" aria-label="Decimal point">.</button>
+      <button class="operator" data-action="equals" aria-label="Equals">=</button>
+    </div>
+    <div class="footer">
+      Modern Calculator &ndash; Crafted with style
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const display = document.getElementById('display');
+      let currentInput = '0';
+      let firstOperand = null;
+      let operator = null;
+      let waitForSecond = false;
+
+      function updateDisplay() {
+        display.textContent = currentInput;
+      }
+
+      function clearAll() {
+        currentInput = '0';
+        firstOperand = null;
+        operator = null;
+        waitForSecond = false;
+        updateDisplay();
+      }
+
+      function backspace() {
+        if (currentInput.length > 1) {
+          currentInput = currentInput.slice(0, -1);
+        } else {
+          currentInput = '0';
+        }
+        updateDisplay();
+      }
+
+      function inputDigit(digit) {
+        if(waitForSecond) {
+          currentInput = digit;
+          waitForSecond = false;
+        } else {
+          if(currentInput === '0') {
+            currentInput = digit;
+          } else {
+            currentInput += digit;
+          }
+        }
+        updateDisplay();
+      }
+
+      function inputDecimal() {
+        if(waitForSecond) {
+          currentInput = '0.';
+          waitForSecond = false;
+          updateDisplay();
+          return;
+        }
+        if (!currentInput.includes('.')) {
+          currentInput += '.';
+        }
+        updateDisplay();
+      }
+
+      function handleOperator(nextOperator) {
+        const inputValue = parseFloat(currentInput);
+        if (operator && waitForSecond) {
+          operator = nextOperator;
+          return;
+        }
+        if (firstOperand === null) {
+          firstOperand = inputValue;
+        } else if (operator) {
+          const result = calculate(firstOperand, inputValue, operator);
+          if (result === 'Error') {
+            currentInput = 'Error';
+            firstOperand = null;
+            operator = null;
+            waitForSecond = true;
+            updateDisplay();
+            return;
+          } else {
+            currentInput = String(result);
+            firstOperand = result;
+          }
+        }
+        operator = nextOperator;
+        waitForSecond = true;
+        updateDisplay();
+      }
+
+      function calculate(first, second, op) {
+        if (op === 'add') return first + second;
+        if (op === 'subtract') return first - second;
+        if (op === 'multiply') return first * second;
+        if (op === 'divide') {
+          if(second === 0) return 'Error';
+          return first / second;
+        }
+        return second;
+      }
+
+      function handlePercent() {
+        let currentValue = parseFloat(currentInput);
+        if (currentValue === 0) return;
+        currentValue = currentValue / 100;
+        currentInput = String(currentValue);
+        updateDisplay();
+      }
+
+      function handleEquals() {
+        if (operator === null || waitForSecond) {
+          return;
+        }
+        const inputValue = parseFloat(currentInput);
+        const result = calculate(firstOperand, inputValue, operator);
+
+        if (result === 'Error') {
+          currentInput = 'Error';
+          firstOperand = null;
+          operator = null;
+          waitForSecond = true;
+          updateDisplay();
+          return;
+        }
+
+        currentInput = String(result);
+        firstOperand = null;
+        operator = null;
+        waitForSecond = true;
+        updateDisplay();
+      }
+
+      document.querySelector('.buttons').addEventListener('click', function(e) {
+        if (!e.target.matches('button')) return;
+        const action = e.target.getAttribute('data-action');
+
+        if (!isNaN(action)) {
+          inputDigit(action);
+          return;
+        }
+
+        switch(action) {
+          case 'clear':
+            clearAll();
+            break;
+          case 'backspace':
+            backspace();
+            break;
+          case 'decimal':
+            inputDecimal();
+            break;
+          case 'add':
+          case 'subtract':
+          case 'multiply':
+          case 'divide':
+            handleOperator(action);
+            break;
+          case 'percent':
+            handlePercent();
+            break;
+          case 'equals':
+            handleEquals();
+            break;
+        }
+      });
+
+      clearAll();
+    })();
+  </script>
+</body>
+</html>
